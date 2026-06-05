@@ -263,7 +263,7 @@ def generate_email(contact: Contact, config: AppConfig) -> EmailDraft:
 
 **Template strategy (MVP):** deterministic Python f-string / `string.Template`.
 
-**Stretch:** `LLMEmailGenerator` implementing the same `generate_email` interface, with a **post-generation validator** (word count, banned phrases, no fake referral language).
+**Stretch:** `GroqEmailGenerator` implementing the same `generate_email` interface (using Groq API), with a **post-generation validator** (word count, banned phrases, no fake referral language).
 
 ---
 
@@ -385,6 +385,9 @@ def append_log(entry: LogEntry, path: str = "outreach_log.csv") -> None:
 | `SEND_MODE` | `draft` or `send` | `draft` |
 | `MAX_OUTREACH_PER_RUN` | Volume cap | `5` |
 | `INPUT_PATH` | `contacts.json` path | optional |
+| `GROQ_API_KEY` | API key for Groq-based rewriting | optional (stretch) |
+| `LLM_PROVIDER` | LLM backend selector | `groq` (stretch) |
+| `LLM_MODEL` | Groq model name for email rewrite | optional (stretch) |
 
 Load via `python-dotenv` from `.env` (never committed).
 
@@ -502,24 +505,31 @@ No database, queue, or web server in MVP.
 Aligned with problem statement §12:
 
 ```text
-the-closer/
+cold-email-parser/
 │
-├── main.py                 # Orchestrator + CLI loop
-├── config.py               # Env loading + AppConfig
-├── models.py               # Contact, EmailDraft, LogEntry (optional split)
-├── input_loader.py         # JSON/CSV/hardcoded loading
-├── email_generator.py      # Template-based generation + validation
-├── preview.py              # Optional: preview + prompt helpers
-├── email_sender.py         # SMTP / Gmail adapters + dry-run
-├── logger.py               # outreach_log.csv append
-├── contacts.json           # Sample input
-├── outreach_log.csv        # Generated at runtime
-├── .env.example
+├── main.py                      # Root entry (adds src/ to PYTHONPATH)
 ├── requirements.txt
+├── .env.example
 ├── README.md
+├── data/
+│   └── contacts.json            # Sample input (Phase 2)
+├── logs/
+│   └── outreach_log.csv         # Generated at runtime (Phase 6)
+├── src/
+│   └── closer/
+│       ├── cli/
+│       │   └── main.py          # Orchestrator + CLI loop (Phase 0 stub, Phase 5+ full)
+│       ├── config/              # Phase 1 — AppConfig, load_config
+│       ├── domain/              # Phase 1 — Contact, EmailDraft, LogEntry
+│       ├── input/               # Phase 2 — load_targets
+│       ├── generation/          # Phase 3 — generate_email (Groq stretch)
+│       ├── preview/             # Phase 4 — preview + confirm
+│       ├── delivery/            # Phase 5–7 — deliver_email, SMTP/Gmail
+│       └── audit/               # Phase 6 — append_log
 └── docs/
     ├── problemStatement.md
-    └── architecture.md
+    ├── architecture.md
+    └── implementation-plan.md
 ```
 
 ---
@@ -538,7 +548,7 @@ flowchart TB
 
     subgraph Stretch["Stretch Goals"]
         B1[Streamlit UI]
-        B2[LLM rewriter + scorer]
+        B2[Groq rewriter + scorer]
         B3[Spam-risk checker]
         B4[Multi-subject suggestions]
         B5[Follow-up generator]
@@ -553,7 +563,7 @@ flowchart TB
 | Gmail drafts | `GmailApiEmailSender` |
 | CSV upload | `input_loader.py` CSV parser |
 | Streamlit UI | `ui/app.py` calls same pipeline functions |
-| LLM rewriting | `LLMEmailGenerator` + `EmailQualityValidator` |
+| LLM rewriting (Groq) | `GroqEmailGenerator` + `EmailQualityValidator` |
 | Quality / spam score | Post-processor plugin before preview |
 | Multiple subjects | Generator returns `list[str]`, user picks in preview |
 | Follow-ups | New `followup_generator.py` + log links `parent_id` |
@@ -617,6 +627,6 @@ Optional: `pytest` for `generate_email()` and validation helpers only.
 
 ## 16. Summary
 
-**The Closer** is a **linear, human-in-the-loop CLI pipeline**: load contacts → generate structured cold emails → preview → confirm → deliver via a pluggable sender → audit in CSV. MVP keeps intelligence in **templates and explicit fields**; stretch goals add **LLM, UI, and quality plugins** without changing the core orchestration contract in `main.py`.
+**The Closer** is a **linear, human-in-the-loop CLI pipeline**: load contacts → generate structured cold emails → preview → confirm → deliver via a pluggable sender → audit in CSV. MVP keeps intelligence in **templates and explicit fields**; stretch goals add **Groq-based LLM rewriting**, UI, and quality plugins without changing the core orchestration contract in `main.py`.
 
 The architecture prioritizes **safety, explainability, and proof of work** over automation scale—matching the sprint’s learning outcome: combining structured writing, personalization variables, email automation, and responsible sending practices.

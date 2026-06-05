@@ -56,7 +56,7 @@ Phase pass threshold: **≥90%** of applicable Block criteria at score 2, and **
 | P0-01 | `requirements.txt` exists with `python-dotenv` | File present |
 | P0-02 | `.gitignore` excludes `.env`, `__pycache__/`, venv | Inspect file |
 | P0-03 | `.env.example` has all vars from problem statement §13 | Compare to spec |
-| P0-04 | Module stubs exist: `main`, `config`, `models`, `input_loader`, `email_generator`, `email_sender`, `logger` | Glob check |
+| P0-04 | Phase packages exist under `src/closer/`: `cli`, `config`, `domain`, `input`, `generation`, `preview`, `delivery`, `audit` | Glob check |
 | P0-05 | `python main.py` exits 0 | Run command |
 | P0-06 | No real secrets in tracked files | `git grep` for password patterns |
 
@@ -502,17 +502,17 @@ Copy for each phase completion PR or chat summary.
 
 ## Evaluator Quick Reference
 
-| Phase | Primary FR | Key file(s) | One-liner smoke test |
-|-------|------------|-------------|----------------------|
-| 0 | — | repo root | `python main.py` → 0 |
-| 1 | NFR | `models.py`, `config.py` | import `load_config` |
-| 2 | FR1 | `input_loader.py` | load 3+ contacts |
-| 3 | FR2 | `email_generator.py` | 3 distinct bodies |
-| 4 | FR3 | `preview.py` | skip → no send |
-| 5 | FR4 dry | `main.py` | full loop DRY_RUN |
-| 6 | FR5 | `logger.py` | CSV rows append |
-| 7 | FR4 live | `email_sender.py` | 1 real email proof |
-| 8 | All | README, data | §17 + §18 complete |
+| Phase | Primary FR | Key path(s) under `src/closer/` | One-liner smoke test |
+|-------|------------|----------------------------------|----------------------|
+| 0 | — | `cli/main.py`, phase package stubs | `python main.py` → 0 |
+| 1 | NFR | `domain/`, `config/` | import `load_config` |
+| 2 | FR1 | `input/`, `data/contacts.json` | load 3+ contacts |
+| 3 | FR2 | `generation/` | 3 distinct bodies |
+| 4 | FR3 | `preview/` | skip → no send |
+| 5 | FR4 dry | `cli/main.py` | full loop DRY_RUN |
+| 6 | FR5 | `audit/`, `logs/` | CSV rows append |
+| 7 | FR4 live | `delivery/` | 1 real email proof |
+| 8 | All | README, `data/`, `logs/` | §17 + §18 complete |
 
 ---
 

@@ -67,23 +67,26 @@ flowchart LR
 
 ### Tasks
 
-- [ ] Initialize repo layout per architecture §10
+- [ ] Initialize repo layout per architecture §10 (`src/closer/` packages by phase)
 - [ ] Add `requirements.txt` with `python-dotenv` (add SMTP/Gmail deps in Phase 7 only if needed)
 - [ ] Add `.gitignore` (`__pycache__/`, `.env`, `*.pyc`, virtualenv)
 - [ ] Add `.env.example` with placeholders from problem statement §13
-- [ ] Add stub `README.md` (one-liner + how to run, filled in Phase 8)
-- [ ] Create empty module files: `main.py`, `config.py`, `models.py`, `input_loader.py`, `email_generator.py`, `email_sender.py`, `logger.py`
+- [ ] Add stub `README.md` with layout table + how to run (filled in Phase 8)
+- [ ] Create phase folders under `src/closer/`: `cli`, `config`, `domain`, `input`, `generation`, `preview`, `delivery`, `audit` (each with `__init__.py` stub)
+- [ ] Add root `main.py` entrypoint and `data/`, `logs/` directories
 - [ ] Verify: `python main.py` prints a placeholder message and exits 0
 
 ### Files
 
-| File | Action |
-|------|--------|
+| File / folder | Action |
+|---------------|--------|
 | `requirements.txt` | Create |
 | `.env.example` | Create |
 | `.gitignore` | Create |
-| `main.py` | Stub `if __name__ == "__main__"` |
-| Module stubs | Create |
+| `main.py` | Root entry; adds `src/` to path, calls `closer.cli.main` |
+| `src/closer/cli/main.py` | Bootstrap message (orchestrator in Phase 5) |
+| `src/closer/{config,domain,input,generation,preview,delivery,audit}/` | Phase stubs |
+| `data/`, `logs/` | Placeholders for inputs and runtime logs |
 
 ### Exit criteria
 
@@ -110,7 +113,7 @@ Explain the **four-module pipeline** (load → generate → preview → send →
   - `LogEntry` — fields for `outreach_log.csv`
   - `DeliveryResult` — `status`, `provider_message_id`, `error`
 - [ ] Implement `config.py`:
-  - `AppConfig` dataclass: SMTP settings, `SENDER_NAME`, `DRY_RUN`, `SEND_MODE`, `MAX_OUTREACH_PER_RUN`, `INPUT_PATH`
+  - `AppConfig` dataclass: SMTP settings, `SENDER_NAME`, `DRY_RUN`, `SEND_MODE`, `MAX_OUTREACH_PER_RUN`, `INPUT_PATH`, and optional stretch LLM vars (`GROQ_API_KEY`, `LLM_PROVIDER`, `LLM_MODEL`)
   - `load_config()` using `python-dotenv`; default `DRY_RUN=true`
 - [ ] Add helper: `count_words(text: str) -> int` (used in Phase 3)
 - [ ] Verify: small script or `python -c` loads config from `.env.example` copy
@@ -441,12 +444,13 @@ Build only after Phase 8. Each stretch phase is independent unless noted.
 
 | Task | Module |
 |------|--------|
-| `LLMEmailGenerator` implementing same interface | `email_generator.py` |
+| `GroqEmailGenerator` implementing same interface via Groq API | `email_generator.py` |
 | `EmailQualityValidator` — word count, banned phrases | New `validators.py` |
 | Spam-risk / quality score before preview | Plugin hook in `main.py` |
 | Multiple subject lines; user picks in preview | `preview.py` |
+| Add Groq settings to `.env.example` (`GROQ_API_KEY`, `LLM_PROVIDER=groq`, `LLM_MODEL`) | `.env.example` |
 
-**Exit criteria:** LLM output passes validator; user still confirms before send; no fabricated experience.
+**Exit criteria:** Groq-generated output passes validator; user still confirms before send; no fabricated experience.
 
 ---
 
